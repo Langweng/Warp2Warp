@@ -1,0 +1,88 @@
+# ====================================================================
+# Experiment Configuration
+# ====================================================================
+experiment:
+  exp_name: "IHN_IDR_GoogleMap_320to256_l2"
+  description: "Iterative Homography Network (IHN) with IDR on GoogleMap 320->256 setting."
+  image_size: [320, 320] # Full image size before ROI crop, crop becomes 256x256
+  
+# ====================================================================
+# Data Configuration
+# ====================================================================
+data:
+  dataset: "GoogleMap"
+  image_root: "data/raw/GoogleMap"
+  train_manifest: "data/manifests/googlemap.json"
+  val_manifest: "data/manifests/googlemap.json"
+  
+  # Warp-Fix Dataset geometry
+  marginal: 32              # 320 - 2 * 32 = 256
+  perturb_range: 64         # First warp range
+
+  # Optional pre-upsample hook for low-resolution GoogleMap inputs.
+  # Keep enabled when the source images are lower than 320x320.
+  input_resize:
+    enabled: true
+    size: [320, 320]
+    interpolation: "bicubic"
+    apply_to: ["fixA", "fixB"]
+  
+# ====================================================================
+# Model Configuration (IHN)
+# ====================================================================
+model:
+  name: "IHN"
+  IHN:
+    iters_lev0: 6
+    iters_lev1: 0
+    lev0: True
+    lev1: False
+  
+# ====================================================================
+# Training Configuration
+# ====================================================================
+training:
+  strategy: "self-supervised"
+  resume: ""
+  resume_model_only: false  # true: only restore model weights, rebuild optimizer/scheduler from current config
+  batch_size: 16
+  num_workers: 4
+  device: "cuda:0"
+  seed: null
+  loss:
+    type: "l1"
+    alpha: 0.85
+    epsilon: 0.1
+    speed_threshold: 1.0
+  
+  # IDR schedule
+  epoch_list: [10,10,10,10,10,10,10,10,10,10,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]
+  warp2: 64                 # Second warp range
+
+  
+# ====================================================================
+# Validation Configuration
+# ====================================================================
+validation:
+  val_interval: 5
+  vis_num: 10
+  batch_size: 1
+
+# ====================================================================
+# Optimizer & Scheduler
+# ====================================================================
+optimizer:
+  type: "AdamW"
+  lr: 0.00005
+  weight_decay: 0.0001
+  
+scheduler:
+  type: "CosineAnnealingLR"
+  eta_min: 0.0000001
+  
+# ====================================================================
+# Logging & Checkpoint
+# ====================================================================
+logging:
+  log_interval: 50
+  save_interval: 20

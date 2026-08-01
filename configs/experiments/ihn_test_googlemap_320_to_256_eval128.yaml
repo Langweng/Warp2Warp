@@ -1,0 +1,73 @@
+# ====================================================================
+# Experiment Configuration
+# ====================================================================
+experiment:
+  exp_name: "IHN_Test_GoogleMap_320to256_Eval128"
+  description: "Strict evaluation of a 256x256-crop IHN checkpoint on 128x128 GoogleMap geometry via 320->256 upsampling."
+  image_size: [320, 320] # Full image size after pre-upsampling, crop becomes 256x256
+
+# ====================================================================
+# Data Configuration
+# ====================================================================
+data:
+  dataset: "GoogleMap"
+  image_root: "data/raw/GoogleMap"
+  val_manifest: "data/manifests/googlemap.json"
+
+  # High-resolution execution geometry.
+  # Images are first resized to 320x320 and then evaluated on a 256x256 crop.
+  marginal: 32
+  # Strict low-resolution perturbation range. The perturbation is sampled on the
+  # original 128x128 ROI and then mapped to the 256x256 ROI coordinate system.
+  perturb_range: 32
+
+  homography_adaptation:
+    enabled: true
+    source_image_size: [192, 192]
+    source_marginal: 32
+    scale_mode: "align_corners"
+
+  input_resize:
+    enabled: true
+    size: [320, 320]
+    interpolation: "bicubic"
+    apply_to: ["fixA", "fixB"]
+
+# ====================================================================
+# Model Configuration (IHN)
+# ====================================================================
+model:
+  name: "IHN"
+  IHN:
+    iters_lev0: 6
+    iters_lev1: 0
+    lev0: true
+    lev1: false
+
+# ====================================================================
+# Runtime Configuration
+# ====================================================================
+training:
+  strategy: "self-supervised"
+  device: "cuda:0"
+  num_workers: 4
+  seed: null
+
+  # Strict low-resolution warp2 range. It is sampled on the 128x128 ROI first,
+  # then mapped to the 256x256 ROI coordinate system.
+  epoch_list: [1, 1]
+  warp2: 32
+
+validation:
+  split: "val"
+  batch_size: 1
+  vis_num: 10
+
+  # MACE is reported after mapping the 256x256 crop prediction back to the
+  # original 128x128 ROI coordinate system.
+  report_resolution: [128, 128]
+  report_scaling: "align_corners"
+
+testing:
+  checkpoint: ""
+  fixed_labels_path: null

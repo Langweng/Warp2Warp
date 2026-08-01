@@ -1,0 +1,93 @@
+# ====================================================================
+# Experiment Configuration
+# ====================================================================
+experiment:
+  exp_name: "IHN_Supervised_GoogleMap_320to256_Mapped"
+  description: "Pure supervised IHN on GoogleMap with low-resolution homography labels mapped to the 320->256 execution geometry."
+  image_size: [320, 320] # Full image size after pre-upsampling; crop becomes 256x256.
+
+# ====================================================================
+# Data Configuration
+# ====================================================================
+data:
+  dataset: "GoogleMap"
+  image_root: "data/raw/GoogleMap"
+  train_manifest: "data/manifests/googlemap.json"
+  val_manifest: "data/manifests/googlemap.json"
+
+  # Execution geometry.
+  marginal: 32              # 320 - 2 * 32 = 256
+
+  # Low-resolution-defined perturbation range. With homography_adaptation
+  # enabled below, this is sampled on the 192->128 geometry and mapped to
+  # the 320->256 execution geometry.
+  perturb_range: 32
+
+  input_resize:
+    enabled: true
+    size: [320, 320]
+    interpolation: "bicubic"
+    apply_to: ["fixA", "fixB"]
+
+  homography_adaptation:
+    enabled: true
+    source_image_size: [192, 192]
+    source_marginal: 32
+    scale_mode: "align_corners"
+
+# ====================================================================
+# Model Configuration (IHN)
+# ====================================================================
+model:
+  name: "IHN"
+  IHN:
+    iters_lev0: 6
+    iters_lev1: 0
+    lev0: true
+    lev1: false
+
+# ====================================================================
+# Training Configuration
+# ====================================================================
+training:
+  strategy: "supervised"
+  resume: ""
+  resume_model_only: false
+  epochs: 500
+  batch_size: 16
+  num_workers: 4
+  device: "cuda:0"
+  seed: null
+  grad_clip: 1.0
+  loss:
+    type: "l1"
+    alpha: 0.85
+    epsilon: 0.1
+    speed_threshold: 1.0
+
+# ====================================================================
+# Validation Configuration
+# ====================================================================
+validation:
+  val_interval: 5
+  vis_num: 10
+  batch_size: 1
+
+# ====================================================================
+# Optimizer & Scheduler
+# ====================================================================
+optimizer:
+  type: "AdamW"
+  lr: 0.00005
+  weight_decay: 0.0001
+
+scheduler:
+  type: "CosineAnnealingLR"
+  eta_min: 0.0000001
+
+# ====================================================================
+# Logging & Checkpoint
+# ====================================================================
+logging:
+  log_interval: 50
+  save_interval: 20
