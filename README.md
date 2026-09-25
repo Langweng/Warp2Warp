@@ -1,6 +1,6 @@
-# WarpHomo
+# Warp2Warp
 
-This is the cleaned GitHub-ready version of the WarpHomo project. It keeps the core IHN homography-estimation pipeline:
+This is the cleaned GitHub-ready version of the WarpHomo project. It keeps the core unsupervised multi-modal homography estimation pipeline:
 
 - self-supervised IDR training
 - supervised training
